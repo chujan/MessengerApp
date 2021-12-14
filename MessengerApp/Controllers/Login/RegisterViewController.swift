@@ -38,7 +38,7 @@ class RegisterViewController: UIViewController {
         field.placeholder = "Email Address..."
         field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 5, height: 0 ))
         field.leftViewMode = .always
-        field.backgroundColor = .white
+        field.backgroundColor = .secondarySystemBackground
         return field
         
     }()
@@ -53,7 +53,7 @@ class RegisterViewController: UIViewController {
         field.placeholder = "Password..."
         field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 5, height: 0 ))
         field.leftViewMode = .always
-        field.backgroundColor = .white
+        field.backgroundColor = .secondarySystemBackground
         field.isSecureTextEntry = true
         return field
         
@@ -69,7 +69,7 @@ class RegisterViewController: UIViewController {
         field.placeholder = "First Name..."
         field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 5, height: 0 ))
         field.leftViewMode = .always
-        field.backgroundColor = .white
+        field.backgroundColor = .secondarySystemBackground
         return field
         
     }()
@@ -84,7 +84,7 @@ class RegisterViewController: UIViewController {
         field.placeholder = "Last Name..."
         field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 5, height: 0 ))
         field.leftViewMode = .always
-        field.backgroundColor = .white
+        field.backgroundColor = .secondarySystemBackground
         return field
         
     }()
@@ -103,7 +103,7 @@ class RegisterViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .systemBackground
         title = "Log In"
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Register",
@@ -175,6 +175,7 @@ class RegisterViewController: UIViewController {
                                   y: passwordField.bottom+10,
                                   width: scrollView.width-60,
                                   height: 52)
+        RegisterButton.addTarget(self, action: #selector(self.RegisterButtonTapped), for: .touchUpInside)
     }
     @objc private func RegisterButtonTapped() {
         emailField.resignFirstResponder()
@@ -195,10 +196,14 @@ class RegisterViewController: UIViewController {
             
             return
         }
+        spinner.show(in: view)
         
         DatabaseManager.shared.userExists(with: email, completion: { [weak self] exists in
             guard let strongSelf = self else {
                 return
+            }
+            DispatchQueue.main.async {
+                strongSelf.spinner.dismiss()
             }
             guard !exists else {
                 
@@ -212,7 +217,34 @@ class RegisterViewController: UIViewController {
                     print("Error creating user")
                     return
                 }
-                DatabaseManager.shared.insertUser(with: ChatAppUser(firstName: firstName, lastName: lastName, emailAddress: email))
+                UserDefaults.standard.setValue(email, forKey: "email")
+                UserDefaults.standard.setValue("\(firstName)\(lastName)", forKey: "name")
+                
+                let chatUser = ChatAppUser(firstName: firstName, lastName: lastName, emailAddress: email)
+                DatabaseManager.shared.insertUser(with: chatUser, completion: { success in
+                    if success {
+                        
+                        guard let image = strongSelf.imageView.image,
+                              let data = image.pngData() else {
+                            return
+                        }
+                        let filename = chatUser.profilePictureFileName
+                        StorageManager.shared.uploadProfilePicture(with: data, fileName: filename, completion: { result in
+                            switch result {
+                            case .success(let downloadurl):
+                                UserDefaults.standard.set(downloadurl, forKey: "profile_picture_url")
+                                print(downloadurl)
+                            case .failure(let error):
+                                print("Storage manager error: \(error)")
+                            
+                            }
+                        })
+                        
+                        
+                        
+                    }
+                    
+                })
                 strongSelf.navigationController?.dismiss(animated: true, completion: nil)
                 
             })

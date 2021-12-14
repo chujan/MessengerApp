@@ -8,5 +8,21 @@ target 'MessengerApp' do
   pod 'Firebase/Core'
   pod 'Firebase/Auth'
   pod 'Firebase/Database'
+  pod 'FBSDKLoginKit'
+  pod 'GoogleSignIn'
+  pod 'MessageKit'
+  pod 'JGProgressHUD'
+  pod 'SDWebImage'
+  pod 'RealmSwift'
+  pod 'Realm'
+  pod 'Firebase/Storage'
+  pod 'Fabric'
+  pod 'Crashlytics'
+  pod 'Firebase/Crashlytics'
+  pod 'Firebase/Analytics'
+  
+
+
+
 
 end
